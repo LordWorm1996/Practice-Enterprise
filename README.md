@@ -1,2 +1,2 @@
-# Practice-Enterprise-
-Practice Enterprise Project for the Thomas More Univercity
+# Practice-Enterprise
+Practice Enterprise Project for the Thomas More Univercity. We are trying to develop a booking application to be used in student dormitories to log actions done by the students living there. You can book house appliances for use in specific time frames like kitchen, washing machine, dryer, bathroom and so on. Depending on what the house offers you can add them to the list in the "Dorm" database.
