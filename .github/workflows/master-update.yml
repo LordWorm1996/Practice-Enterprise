@@ -35,6 +35,8 @@ jobs:
   update-branches:
     needs: check-sync
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
