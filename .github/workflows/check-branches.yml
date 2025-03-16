@@ -1,0 +1,79 @@
+name: Check Branch Sync and Conditional Auto-Merge
+
+on:
+  schedule:
+    - cron: '0 12 * * *'  # Runs daily at 12:00 UTC
+  push:
+    branches:
+      - main
+
+jobs:
+  check-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for comparisons
+
+      - name: Check if master-backend is behind main
+        id: backend_check
+        run: |
+          if git merge-base --is-ancestor main master-backend; then
+            echo "backend_up_to_date=true" >> $GITHUB_ENV
+          else
+            echo "backend_up_to_date=false" >> $GITHUB_ENV
+          fi
+
+      - name: Check if master-frontend is behind main
+        id: frontend_check
+        run: |
+          if git merge-base --is-ancestor main master-frontend; then
+            echo "frontend_up_to_date=true" >> $GITHUB_ENV
+          else
+            echo "frontend_up_to_date=false" >> $GITHUB_ENV
+          fi
+
+  create-pr:
+    needs: check-sync
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+
+      - name: Create PR for master-backend (if needed)
+        if: env.backend_up_to_date == 'false'
+        run: |
+          git checkout master-backend
+          git merge main --no-edit || echo "CONFLICT=true" >> $GITHUB_ENV
+          if [[ "$CONFLICT" != "true" ]]; then
+            git push origin master-backend
+          else
+            gh pr create --base master-backend --head main --title "Sync main -> master-backend" --body "Auto-generated PR to sync main into master-backend. **Conflicts detected – manual merge required.**"
+          fi
+
+      - name: Create PR for master-frontend (if needed)
+        if: env.frontend_up_to_date == 'false'
+        run: |
+          git checkout master-frontend
+          git merge main --no-edit || echo "CONFLICT=true" >> $GITHUB_ENV
+          if [[ "$CONFLICT" != "true" ]]; then
+            git push origin master-frontend
+          else
+            gh pr create --base master-frontend --head main --title "Sync main -> master-frontend" --body "Auto-generated PR to sync main into master-frontend. **Conflicts detected – manual merge required.**"
+          fi
+
+      - name: Enable Auto-Merge (if no conflicts)
+        if: env.CONFLICT != 'true'
+        run: |
+          for pr in $(gh pr list --state open --json number --jq '.[].number'); do
+            gh pr merge $pr --auto --squash
+          done
