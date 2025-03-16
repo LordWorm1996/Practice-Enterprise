@@ -17,7 +17,6 @@ jobs:
       - name: Check if master-backend is behind main
         id: backend_check
         run: |
-          git fetch --all
           if git merge-base --is-ancestor main origin/master-backend; then
             echo "backend_up_to_date=true" >> $GITHUB_ENV
           else
@@ -27,7 +26,6 @@ jobs:
       - name: Check if master-frontend is behind main
         id: frontend_check
         run: |
-          git fetch --all
           if git merge-base --is-ancestor main origin/master-frontend; then
             echo "frontend_up_to_date=true" >> $GITHUB_ENV
           else
@@ -41,8 +39,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}  # Automatically available in Actions
 
       - name: Configure Git
         run: |
@@ -52,9 +49,8 @@ jobs:
       - name: Merge main into master-backend (if needed)
         if: env.backend_up_to_date == 'false'
         run: |
-          git fetch --all
           git checkout master-backend
-          git merge origin/main --no-edit || echo "CONFLICT=true" >> $GITHUB_ENV
+          git merge main --no-edit || echo "CONFLICT=true" >> $GITHUB_ENV
           if [[ "$CONFLICT" != "true" ]]; then
             git push origin master-backend
           else
@@ -64,9 +60,8 @@ jobs:
       - name: Merge main into master-frontend (if needed)
         if: env.frontend_up_to_date == 'false'
         run: |
-          git fetch --all
           git checkout master-frontend
-          git merge origin/main --no-edit || echo "CONFLICT=true" >> $GITHUB_ENV
+          git merge main --no-edit || echo "CONFLICT=true" >> $GITHUB_ENV
           if [[ "$CONFLICT" != "true" ]]; then
             git push origin master-frontend
           else
