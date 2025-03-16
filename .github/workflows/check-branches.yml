@@ -54,7 +54,7 @@ jobs:
         run: |
           git checkout master-backend
           git merge main --no-edit || echo "CONFLICT=true" >> $GITHUB_ENV
-          if [[ "$CONFLICT" != "true" ]]; then
+          if [[ "$(cat $GITHUB_ENV | grep CONFLICT | cut -d= -f2)" != "true" ]]; then
             git push origin master-backend
           else
             gh pr create --base master-backend --head main --title "Sync main -> master-backend" --body "Auto-generated PR to sync main into master-backend. **Conflicts detected – manual merge required.**"
@@ -65,14 +65,14 @@ jobs:
         run: |
           git checkout master-frontend
           git merge main --no-edit || echo "CONFLICT=true" >> $GITHUB_ENV
-          if [[ "$CONFLICT" != "true" ]]; then
+          if [[ "$(cat $GITHUB_ENV | grep CONFLICT | cut -d= -f2)" != "true" ]]; then
             git push origin master-frontend
           else
             gh pr create --base master-frontend --head main --title "Sync main -> master-frontend" --body "Auto-generated PR to sync main into master-frontend. **Conflicts detected – manual merge required.**"
           fi
 
       - name: Enable Auto-Merge (if no conflicts)
-        if: env.CONFLICT != 'true'
+        if: "! grep -q CONFLICT=true $GITHUB_ENV"
         run: |
           for pr in $(gh pr list --state open --json number --jq '.[].number'); do
             gh pr merge $pr --auto --squash
