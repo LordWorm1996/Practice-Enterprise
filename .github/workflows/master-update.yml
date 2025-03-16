@@ -17,7 +17,8 @@ jobs:
       - name: Check if master-backend is behind main
         id: backend_check
         run: |
-          if git merge-base --is-ancestor main master-backend; then
+          git fetch --all
+          if git merge-base --is-ancestor main origin/master-backend; then
             echo "backend_up_to_date=true" >> $GITHUB_ENV
           else
             echo "backend_up_to_date=false" >> $GITHUB_ENV
@@ -26,7 +27,8 @@ jobs:
       - name: Check if master-frontend is behind main
         id: frontend_check
         run: |
-          if git merge-base --is-ancestor main master-frontend; then
+          git fetch --all
+          if git merge-base --is-ancestor main origin/master-frontend; then
             echo "frontend_up_to_date=true" >> $GITHUB_ENV
           else
             echo "frontend_up_to_date=false" >> $GITHUB_ENV
@@ -50,8 +52,9 @@ jobs:
       - name: Merge main into master-backend (if needed)
         if: env.backend_up_to_date == 'false'
         run: |
+          git fetch --all
           git checkout master-backend
-          git merge main --no-edit || echo "CONFLICT=true" >> $GITHUB_ENV
+          git merge origin/main --no-edit || echo "CONFLICT=true" >> $GITHUB_ENV
           if [[ "$CONFLICT" != "true" ]]; then
             git push origin master-backend
           else
@@ -61,8 +64,9 @@ jobs:
       - name: Merge main into master-frontend (if needed)
         if: env.frontend_up_to_date == 'false'
         run: |
+          git fetch --all
           git checkout master-frontend
-          git merge main --no-edit || echo "CONFLICT=true" >> $GITHUB_ENV
+          git merge origin/main --no-edit || echo "CONFLICT=true" >> $GITHUB_ENV
           if [[ "$CONFLICT" != "true" ]]; then
             git push origin master-frontend
           else
