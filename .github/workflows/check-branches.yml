@@ -72,7 +72,7 @@ jobs:
           fi
 
       - name: Enable Auto-Merge (if no conflicts)
-        if: "! grep -q CONFLICT=true $GITHUB_ENV"
+        if: env.CONFLICT != 'true'
         run: |
           for pr in $(gh pr list --state open --json number --jq '.[].number'); do
             gh pr merge $pr --auto --squash
