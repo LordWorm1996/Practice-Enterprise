@@ -1,4 +1,4 @@
-name: Auto Merge Main to Backend & Frontend
+name: Auto Rebase Main to Backend & Frontend
 
 on:
   push:
@@ -6,8 +6,8 @@ on:
       - main
 
 jobs:
-  merge-branches:
-    name: Merge Main into Backend & Frontend
+  rebase-branches:
+    name: Rebase Main into Backend & Frontend
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -17,53 +17,55 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Ensure full history for merge
+          fetch-depth: 0  # Ensure full history for rebase
 
       - name: Set up Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Merge Main into master-backend (Fast-Forward Only)
-        id: merge_backend
+      - name: Rebase master-backend onto main
+        id: rebase_backend
         run: |
           git checkout master-backend
-          if ! git merge --ff-only main; then
-            echo "conflict=true" >> $GITHUB_ENV
+          git pull origin master-backend
+          if git rebase main; then
+            git push --force-with-lease origin master-backend
+            echo "backend_conflict=false" >> $GITHUB_ENV
+          else
+            git rebase --abort
+            echo "backend_conflict=true" >> $GITHUB_ENV
           fi
 
-      - name: Push Fast-Forward Merge to master-backend
-        if: env.conflict != 'true'
-        run: git push origin master-backend
-
       - name: Create PR for master-backend if conflicts exist
-        if: env.conflict == 'true'
+        if: env.backend_conflict == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
           base: master-backend
           head: main
-          title: "Resolve conflicts: Merge main into master-backend"
-          body: "Conflicts detected. Resolve manually."
-          labels: "auto-merge"
+          title: "Resolve conflicts: Rebase main onto master-backend"
+          body: "Conflicts detected during rebase. Resolve manually."
+          labels: "auto-rebase"
 
-      - name: Merge Main into master-frontend (Fast-Forward Only)
-        id: merge_frontend
+      - name: Rebase master-frontend onto main
+        id: rebase_frontend
         run: |
           git checkout master-frontend
-          if ! git merge --ff-only main; then
-            echo "conflict=true" >> $GITHUB_ENV
+          git pull origin master-frontend
+          if git rebase main; then
+            git push --force-with-lease origin master-frontend
+            echo "frontend_conflict=false" >> $GITHUB_ENV
+          else
+            git rebase --abort
+            echo "frontend_conflict=true" >> $GITHUB_ENV
           fi
 
-      - name: Push Fast-Forward Merge to master-frontend
-        if: env.conflict != 'true'
-        run: git push origin master-frontend
-
       - name: Create PR for master-frontend if conflicts exist
-        if: env.conflict == 'true'
+        if: env.frontend_conflict == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
           base: master-frontend
           head: main
-          title: "Resolve conflicts: Merge main into master-frontend"
-          body: "Conflicts detected. Resolve manually."
-          labels: "auto-merge"
+          title: "Resolve conflicts: Rebase main onto master-frontend"
+          body: "Conflicts detected during rebase. Resolve manually."
+          labels: "auto-rebase"
