@@ -1,82 +1,100 @@
-require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
+const bodyParser = require("body-parser");
+const dotenv = require("dotenv");
+
+// Load environment variables from .env file
+dotenv.config();
 
 const app = express();
-const PORT = 5000;
+app.use(bodyParser.json());
 
-app.use(express.json());
-
-const mongoURI = process.env.MONGO_URI;
-if (!mongoURI) {
-  console.error("MONGO_URI is not defined. Check your .env file.");
-  process.exit(1);
-}
-
+// MongoDB connection using the complete MONGO_URI from .env
 mongoose
-  .connect(mongoURI, {
+  .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log("Connected to MongoDB Atlas"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+  .then(() => {
+    console.log("Connected to MongoDB");
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+  });
 
-// Define User Schema & Model
-const UserSchema = new mongoose.Schema({
-  name: String,
-  surname: String,
-  email: String,
-});
-const User = mongoose.model("User", UserSchema);
-
-// GET Users
-app.get("/users", async (req, res) => {
-  try {
-    const users = await User.find();
-    res.json(users);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch users" });
-  }
+// Define User schema
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
 });
 
-// POST New User
-app.post("/users", async (req, res) => {
-  try {
-    const user = new User(req.body);
-    await user.save();
-    res.status(201).json(user);
-  } catch (err) {
-    res.status(400).json({ error: "Failed to create user" });
-  }
-});
+// Create User model
+const User = mongoose.model("User", userSchema);
 
-// PUT User
-app.put("/users/:id", async (req, res) => {
+// Registration endpoint
+app.post("/register", async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
+    const { username, email, password } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ message: "Username or email already exists" });
+    }
+
+    // Generate salt and hash password
+    const saltRounds = 10;
+    const salt = await bcrypt.genSalt(saltRounds);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create new user with hashed password
+    const newUser = new User({
+      username,
+      email,
+      password: hashedPassword,
     });
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-    res.json(user);
-  } catch (err) {
-    res.status(400).json({ error: "Failed to update user" });
+
+    // Save user to database
+    await newUser.save();
+
+    res.status(201).json({ message: "User registered successfully" });
+  } catch (error) {
+    console.error("Registration error:", error);
+    res.status(500).json({ message: "Server error during registration" });
   }
 });
 
-// DELETE User
-app.delete("/users/:id", async (req, res) => {
+// Login endpoint
+app.post("/login", async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const { username, password } = req.body;
+
+    // Find user by username
+    const user = await User.findOne({ username });
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
-    res.json({ message: "User deleted successfully" });
-  } catch (err) {
-    res.status(400).json({ error: "Failed to delete user" });
+
+    // Compare provided password with stored hash
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Password matches - in a real app, you would generate a JWT token here
+    res.status(200).json({ message: "Login successful", userId: user._id });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Server error during login" });
   }
 });
 
-// Start Server
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
