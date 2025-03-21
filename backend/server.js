@@ -34,6 +34,7 @@ const user = require("./route/user");
 // Use user route when url matches /api/user/
 app.use("/api/user", user);
 
+/*
 // GET Users
 app.get("/users", async (req, res) => {
   try {
@@ -82,6 +83,6 @@ app.delete("/users/:id", async (req, res) => {
     res.status(400).json({ error: "Failed to delete user" });
   }
 });
-
+*/
 // Start Server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
