@@ -1,4 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { redirect } from "next/navigation"
+
 
 export default function DashboardPage() {
   return (
@@ -22,4 +23,8 @@ export default async function Main() {
   const nodeMsg = await fromNode();
 
   return <div>{nodeMsg.quote}</div>;
+}
+
+export default function HomePage() {
+    redirect('/dashboard')
 }
