@@ -17,12 +17,18 @@ import { z } from "zod"; // Import zodResolver
 
 export function RegisterForm() {
 
+    // Set defaultValues to ensure fields are controlled from the start
     const form = useForm<z.infer<typeof registerFormSchema>>({
         resolver: zodResolver(registerFormSchema),
-    })
+        defaultValues: {
+            name: '',
+            surname: '',
+            email: '',
+        },
+    });
 
     function onSubmit(values: z.infer<typeof registerFormSchema>) {
-        console.log(values)
+        console.log(values);
     }
 
     return (
@@ -79,5 +85,5 @@ export function RegisterForm() {
                 <Button type="submit">Submit</Button>
             </form>
         </Form>
-    )
+    );
 }
