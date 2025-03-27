@@ -1,7 +1,6 @@
-import { redirect } from "next/navigation"
+import { redirect } from "next/navigation";
 
-
-export default function DashboardPage() {
+export function DashboardPage() {
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100">
       <Card className="w-full max-w-md shadow-lg">
@@ -19,12 +18,12 @@ const fromNode = async () => {
   return res.json();
 };
 
-export default async function Main() {
+export async function Main() {
   const nodeMsg = await fromNode();
 
   return <div>{nodeMsg.quote}</div>;
 }
 
 export default function HomePage() {
-    redirect('/dashboard')
+  redirect("/dashboard");
 }
