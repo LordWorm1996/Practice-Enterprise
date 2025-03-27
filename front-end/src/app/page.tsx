@@ -12,3 +12,14 @@ export default function DashboardPage() {
     </main>
   );
 }
+
+const fromNode = async () => {
+  const res = await fetch("http://localhost:5000/random-quote"); //change port if different
+  return res.json();
+};
+
+export default async function Main() {
+  const nodeMsg = await fromNode();
+
+  return <div>{nodeMsg.quote}</div>;
+}
