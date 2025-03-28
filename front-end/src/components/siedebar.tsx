@@ -1,9 +1,8 @@
 'use client'
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
-
     Folder,
     CheckCircle2,
     Users,
@@ -11,10 +10,16 @@ import {
     LogOut,
     Home,
 } from "lucide-react"
-import {LogoFullLink} from "@/components/ui/shared";
+import { LogoFullLink } from "@/components/ui/shared"
 
 export function Sidebar() {
     const pathname = usePathname()
+    const router = useRouter()
+
+    const handleLogout = () => {
+
+        router.push("/login")
+    }
 
     const navItems = [
         {
@@ -67,7 +72,12 @@ export function Sidebar() {
                     </nav>
                 </div>
                 <div className="mt-auto p-4">
-                    <Button size="sm" className="w-full">
+                    <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={handleLogout}
+                        variant="ghost"
+                    >
                         <LogOut className="mr-2 h-4 w-4" />
                         Logout
                     </Button>
