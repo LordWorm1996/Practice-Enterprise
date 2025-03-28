@@ -1,6 +1,6 @@
 import { Home } from "lucide-react"
 import {RegisterForm} from "@/components/register-form";
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 
 export default function RegisterPage() {
     return (
@@ -15,12 +15,7 @@ export default function RegisterPage() {
                 <Card>
                     <CardHeader className="text-center">
                         <CardTitle className="text-xl">Welcome back</CardTitle>
-                        {/*<CardDescription>*/}
-                        {/*  Login with your Google account*/}
-                        {/*</CardDescription>*/}
-                        <CardDescription>
-                            Login with your DormNet account
-                        </CardDescription>
+
                     </CardHeader>
                     <CardContent>
 
